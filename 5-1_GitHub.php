@@ -117,7 +117,7 @@ if(!empty($_POST['edit2'])){
 </head>
 <body>
 
-  <span style="font-size:35px">🍐簡易掲示板🍐</span><br>
+  <span style="font-size:35px">🍋簡易掲示板🍋</span><br>
    <form action="" method="post">
        <p> <input type="txt" name="name" placeholder="名前（30字以内）" 
                   value="<?php if(isset($e_name)){echo $e_name;} ?>"></p> 
