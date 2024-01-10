@@ -18,26 +18,31 @@ $sql = "CREATE TABLE IF NOT EXISTS mission5"
     $stmt = $pdo->query($sql);
   
 //投稿機能
-if(!empty($_POST['name']) && !empty($_POST['comment']) && !empty($_POST['password'])){
+if(isset($_POST['submit'])){
+  $msg = "名前、コメント、パスワードをすべて入力してください";
 
-//DB追加コード
-//DBへのレコード登録
-  $name = $_POST['name'];
-  $comment = $_POST['comment']; 
-  $password = $_POST['password'];
-  $date = date("Y/m/d H:i:s");
+   if(!empty($_POST['name']) && !empty($_POST['comment']) && !empty($_POST['password'])){
 
-   if(empty($_POST['edit2'])){ //新規投稿
-     $sql = "INSERT INTO mission5 (name, comment, password, date) 
-          VALUES (:name, :comment, :password, :date)";
-     $stmt = $pdo->prepare($sql);
-     $stmt->bindParam(':name', $name, PDO::PARAM_STR);
-     $stmt->bindParam(':comment', $comment, PDO::PARAM_STR);
-     $stmt->bindParam(':password', $password, PDO::PARAM_STR);
-     $stmt->bindParam(':date', $date, PDO::PARAM_STR);
-     $stmt->execute();
+   //DB追加コード
+   //DBへのレコード登録
+     $name = $_POST['name'];
+     $comment = $_POST['comment']; 
+     $password = $_POST['password'];
+     $date = date("Y/m/d H:i:s");
 
-     $msg = "投稿を受け付けました";
+      if(empty($_POST['edit2'])){ //新規投稿
+        $sql = "INSERT INTO mission5 (name, comment, password, date) 
+                VALUES (:name, :comment, :password, :date)";
+          //「：」のついた代替文字列をプレースホルダという……SQLインジェクション攻撃※の回避が可能
+          //※開発者の裏を突いて想定外のSQLを組み立て、DBに対して実行させようとする攻撃方法
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':name', $name, PDO::PARAM_STR);
+        $stmt->bindParam(':comment', $comment, PDO::PARAM_STR);
+        $stmt->bindParam(':password', $password, PDO::PARAM_STR);
+        $stmt->bindParam(':date', $date, PDO::PARAM_STR);
+        $stmt->execute(); //execute……実行
+        $msg = "投稿を受け付けました"; 
+      }
    }
 }
 
@@ -51,11 +56,14 @@ if(!empty($_POST['delete']) && !empty($_POST['de_password'])){
 
   $sql = 'DELETE FROM mission5 where id=:d_id && password=:d_password';
   $stmt = $pdo->prepare($sql);
-  $stmt->bindParam(':d_id', $d_id, PDO::PARAM_INT);
-  $stmt->bindParam(':d_password', $d_pass, PDO::PARAM_STR); 
+  $stmt->bindParam(':d_id', $d_id, PDO::PARAM_INT); //PARAM_INTは整数型……文字列を受け付けない
+  $stmt->bindParam(':d_password', $d_pass, PDO::PARAM_STR); //passwordはVARCHAR型（文字列のみ受け付ける）……PARAM_INTではなくPARAM_STRとする
+    //PDO（定義済み定数）参考　▶　https://www.php.net/manual/ja/pdo.constants.php
   $stmt->execute(); 
 
   $msg = $stmt->rowCount() ? '削除しました' : '番号またはパスワードが違います';
+  //rowCount()……処理実行後、直近のDELETE,INSERT,UPDATE件数を取得するメソッド
+  //三項演算子……1つの処理で3つの式を使用できる演算子　▶「条件式 ? 真の式 : 偽の式」
 }
    
 //編集機能、投稿フォームへの送信準備
@@ -80,7 +88,8 @@ if(!empty($_POST['edit']) && !empty($_POST['de_password'])){
       $e_pass2 = $e_row['password'];
     }else{
       $msg = "番号またはパスワードが違います";
-    }
+    //unset($e_id); ←必要？？
+   }
 }
 
 //編集機能、編集投稿かどうかの確認　と　投稿の書き換え……hiddenで見えないフォーム
@@ -118,6 +127,7 @@ if(!empty($_POST['edit2'])){
 <body>
 
   <span style="font-size:35px">🍋簡易掲示板🍋</span><br>
+  <span style="font-size:17px">お疲れさまです。ご自由にどうぞ～</span><br>
    <form action="" method="post">
        <p> <input type="txt" name="name" placeholder="名前（30字以内）" 
                   value="<?php if(isset($e_name)){echo $e_name;} ?>"></p> 
@@ -131,11 +141,9 @@ if(!empty($_POST['edit2'])){
        <p> <input type="submit" name="submit" 
                   value="<?php if(isset($e_num)){echo "更新";} else{echo "投稿";} ?>"></p>
            <input type="number" name="delete" placeholder="削除したい番号">
-           <input type="submit" name="submit_2" value="削除">
        <p> <input type="number" name="edit" placeholder="編集したい番号">
-           <input type="submit" name="submit_3" value="編集"> </p>
        <p> <input type="txt" name="de_password" placeholder="パスワードを入力">
-           <input type="submit" name="submit_4" value="pass"> </p>
+           <input type="submit" name="submit2" value="削除／編集"> </p>
    </form>
   <p> <span style="color:red"><?php if(isset($msg)){echo $msg;} ?></span></p>
 
@@ -150,6 +158,7 @@ $sql = 'SELECT * FROM mission5'; //SELECT文を変数に格納
 $stmt = $pdo->query($sql); //SQLステートメントを実行し、結果を変数に格納 ※query……問い合わせ
 $results = $stmt->fetchAll(); //sqlの結果について、一度に全ての行を取ってくる……fetchAll
  foreach ($results as $row){
+    //$rowの中にはテーブルのカラム名を入れる
     echo $row['id'].'．';
     echo $row['name'].'）';
     echo $row['comment'].'【';
