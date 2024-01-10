@@ -18,7 +18,7 @@ $sql = "CREATE TABLE IF NOT EXISTS mission5"
     $stmt = $pdo->query($sql);
   
 //投稿機能
-if(isset($_POST['submit'])){
+if(isset($_POST['submit'])){ //エラーメッセージ表示……「投稿」ボタンを押した際に表示されるように条件付け
   $msg = "名前、コメント、パスワードをすべて入力してください";
 
    if(!empty($_POST['name']) && !empty($_POST['comment']) && !empty($_POST['password'])){
